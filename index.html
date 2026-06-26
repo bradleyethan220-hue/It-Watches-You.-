@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>It Watches You</title>
+<title>It Lives In Your House</title>
 <style>
   body { margin:0; overflow:hidden; background:black; }
   canvas { background:#111; display:block; margin:0 auto; }
@@ -21,7 +21,7 @@
 <body>
 <div id="msg"></div>
 <div id="glitch"></div>
-<canvas id="game" width="900" height="400"></canvas>
+<canvas id="game" width="1000" height="450"></canvas>
 
 <script>
 const c = document.getElementById("game");
@@ -29,13 +29,13 @@ const ctx = c.getContext("2d");
 const msg = document.getElementById("msg");
 const glitch = document.getElementById("glitch");
 
-let state = "intro"; // intro → monologue → chase
+let state = "intro"; // intro → monologue → chase → dead → respawn
 let timer = 0;
 
-// Player
-let player = { x:50, y:300, vx:0, vy:0, onGround:false };
+// Player (human shape)
+let player = { x:100, y:300, vx:0, vy:0, onGround:false };
 
-// Monster
+// Monster (humanoid)
 let monster = { x:-200, y:300, speed:0 };
 
 // Controls
@@ -43,13 +43,20 @@ let keys = {};
 document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
+// Obstacles + furniture
+const obstacles = [
+  { x:300, y:330, w:80, h:20 },   // couch
+  { x:500, y:330, w:40, h:20 },   // radio table
+  { x:700, y:330, w:120, h:20 },  // couch 2
+];
+
 // Text sequence
 const lines = [
-  "Hello.",
-  "I see you.",
+  "Welcome home.",
   "You enjoy life, don’t you?",
-  "Running. Laughing. Breathing.",
-  "I don’t get to do that.",
+  "Warm rooms. Soft couches.",
+  "Music from your radio.",
+  "I don’t get any of that.",
   "I only watch.",
   "But tonight…",
   "I want to feel alive too."
@@ -65,93 +72,5 @@ function showLine(text, delay=2000) {
 // Physics
 function updatePlayer() {
   if (state === "chase") {
-    if (keys["w"]) player.vy = -8;
-    if (keys["d"]) player.vx = 4;
-  }
-
-  player.vy += 0.4; // gravity
-  player.x += player.vx;
-  player.y += player.vy;
-
-  if (player.y > 300) {
-    player.y = 300;
-    player.vy = 0;
-    player.onGround = true;
-  } else player.onGround = false;
-
-  player.vx *= 0.8;
-}
-
-// Monster AI
-function updateMonster() {
-  if (state !== "chase") return;
-  monster.speed += 0.02;
-  monster.x += monster.speed;
-
-  if (monster.x > player.x - 40) {
-    msg.textContent = "IT GOT YOU";
-    msg.style.opacity = 1;
-    state = "dead";
-  }
-}
-
-// Glitch effect
-function doGlitch() {
-  if (Math.random() < 0.1) {
-    glitch.style.opacity = 0.3;
-    setTimeout(()=> glitch.style.opacity = 0, 100);
-  }
-}
-
-// Draw
-function draw() {
-  ctx.clearRect(0,0,c.width,c.height);
-
-  // ground
-  ctx.fillStyle="#222";
-  ctx.fillRect(0,340,900,60);
-
-  // player
-  ctx.fillStyle="white";
-  ctx.fillRect(player.x, player.y-40, 30, 40);
-
-  // monster
-  if (state === "chase" || state === "dead") {
-    ctx.fillStyle="red";
-    ctx.fillRect(monster.x, monster.y-40, 40, 40);
-  }
-}
-
-// Game loop
-function loop() {
-  timer++;
-
-  if (state === "intro") {
-    if (timer === 60) showLine(lines[lineIndex]);
-    if (timer > 200) {
-      timer = 0;
-      lineIndex++;
-      if (lineIndex < lines.length) {
-        showLine(lines[lineIndex]);
-      } else {
-        state = "chase";
-        msg.textContent = "";
-        monster.x = -100;
-        monster.speed = 2;
-      }
-    }
-  }
-
-  if (state === "chase") doGlitch();
-
-  updatePlayer();
-  updateMonster();
-  draw();
-
-  requestAnimationFrame(loop);
-}
-
-loop();
-</script>
-</body>
-</html>
+    if (keys["w"] || keys[" "]) {
+      if (player.onGround) player.vy = -10
